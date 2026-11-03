@@ -111,7 +111,7 @@ Y_env   <- Y; colnames(Y_env) <- lab[colnames(Y)]
 fit_env <- envfit(pcoa$points, Y_env, permutations = 9999)
 fit_env
 
-#save pcoa plot with arrows
+#save pcoa plot with envfit arrows
 png("Final/pcoa_arrows.png", width = 8, height = 7, units = "in", res = 300)
 plot(pcoa$points, pch = 19, col = "grey60",
      xlab = paste0("PCoA 1 (", ve[1], "%)"), ylab = paste0("PCoA 2 (", ve[2], "%)"))
@@ -119,7 +119,7 @@ plot(fit_env, p.max = 0.05, col = "red")
 dev.off()
 
 
-# ---- 4. Research question 1: genus-by-genus regression -------------
+# 4. Research question 1: genus-by-genus regression 
 # One model per genus x outcome: outcome ~ genus + stage (+ creatinine)
 run_regression <- function(X, adjust_crea = TRUE) {
   Xz  <- scale(X)
@@ -157,7 +157,7 @@ plot_heatmap <- function(res, file) {
 plot_heatmap(reg, "Final/heatmap_regression.png")
 
 
-# ---- 5. Research question 2: global test ---------------------------
+# 5. Research question 2: global test
 # One test per outcome: do all genera together predict the outcome?
 run_gt <- function(X, adjust_crea = TRUE) {
   null_f <- if (adjust_crea) ~ stage + log_crea else ~ stage
@@ -180,7 +180,7 @@ ggplot(gt_main, aes(reorder(outcome_lab, -p), -log10(p), fill = sig)) +
 ggsave("Final/hierarchy_globaltest.png", width = 8, height = 6, dpi = 300, bg = "white")
 
 
-# ---- 6a. Supplementary: elastic net + LOOCV ------------------------
+# 6a. Supplementary: elastic net + LOOCV
 covs <- model.matrix(~ stage + log_crea)[, -1]
 Xen  <- cbind(covs, scale(X))
 pen  <- c(rep(0, ncol(covs)), rep(1, ncol(X)))       # covariates are never penalised
@@ -223,10 +223,13 @@ plot_stable <- function(m) {
     labs(x = NULL, y = "Elastic net coefficient", title = lab[m]) + theme_minimal(base_size = 13)
 }
 plot_stable("IPA_B") + plot_stable("Calpr_B")
+#acetate and LBP
+plot_stable("Ace_B")
+plot_stable("LBP")
 ggsave("Final/elastic_net_stable.png", width = 12, height = 5, dpi = 300, bg = "white")
 
 
-# ---- 6b. Supplementary: sparse PLS ---------------------------------
+# 6b. Supplementary: sparse PLS
 X_spls <- X; colnames(X_spls) <- nm[colnames(X)]
 Y_spls <- Y; colnames(Y_spls) <- lab[colnames(Y)]
 nzv <- nearZeroVar(X_spls)$Position
@@ -244,7 +247,7 @@ cim(fit_spls, comp = 1:2, margins = c(10, 15))
 dev.off()
 
 
-# ---- 7. Sensitivity analyses ---------------------------------------
+#7. Sensitivity analyses
 # (i) adjusted for stage only, (ii) genera in >= 30% of patients
 reg_stage <- run_regression(X, adjust_crea = FALSE)
 reg_30    <- run_regression(X30)
@@ -269,7 +272,7 @@ ranks[order(ranks$main), ]
 cor(ranks[, -1], method = "spearman")
 
 
-# ---- 8. Diagnostics for key associations ---------------------------
+#8. Diagnostics for key associations
 check_assoc <- function(genus_label, m) {
   g   <- names(nm)[nm == genus_label]
   x   <- scale(X[, g])[, 1]; y <- Y[, m]
