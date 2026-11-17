@@ -9,6 +9,7 @@
 # Packages (once):
 #   install.packages(c("vegan", "ggplot2", "tidyr", "pheatmap", "glmnet", "patchwork"))
 #   BiocManager::install(c("mixOmics", "globaltest"))
+# Previous version: R_data_backup_20261117.R
 # =============================================================
 
 # 0. Setup ----
@@ -58,6 +59,24 @@ c(patients = nrow(data), genera = ncol(genus), non_empty = ncol(genus_nz),
   genera_10pct = ncol(X), genera_30pct = ncol(X30), zeros_pct = round(100 * mean(genus_nz == 0)))
 table(stage)
 colSums(is.na(meta)); colSums(meta[, -1] <= 0)    # expect no missing / zero values
+
+# Table 1: sample characteristics by cancer stage, median [IQR] on the original scale
+# (units: see the codebook; add them to the row names in the report)
+med_iqr <- function(v) {
+  f <- function(x) trimws(formatC(x, digits = 3, format = "fg", big.mark = ","))
+  sprintf("%s [%s-%s]", f(median(v)), f(quantile(v, 0.25)), f(quantile(v, 0.75)))
+}
+tab1_vars <- c(Creat_B = "Plasma creatinine", lab)
+summ <- function(rows) c(
+  "Genera detected per patient"                = med_iqr(rowSums(genus_nz[rows, ] > 0)),
+  "Genera detected per patient (>= 10% filter)" = med_iqr(rowSums(X[rows, ] > 0)),
+  setNames(sapply(names(tab1_vars), function(v) med_iqr(meta[rows, v])), tab1_vars))
+groups <- c(split(seq_len(nrow(meta)), stage), list(Total = seq_len(nrow(meta))))
+table1 <- sapply(groups, summ)
+colnames(table1) <- c(sprintf("Stage %s (n = %d)", levels(stage), table(stage)),
+                      sprintf("Total (n = %d)", nrow(meta)))
+table1
+write.csv(table1, "Final/table1.csv")
 
 png("Final/prevalence_histogram.png", width = 6, height = 5, units = "in", res = 300)
 hist(prev, breaks = seq(0, 1, 0.05), col = "grey80", main = "",
